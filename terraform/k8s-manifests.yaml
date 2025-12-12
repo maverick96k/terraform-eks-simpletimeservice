@@ -1,0 +1,63 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: simpletimeservice
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simpletimeservice
+  namespace: simpletimeservice
+  labels:
+    app: simpletimeservice
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: simpletimeservice
+  template:
+    metadata:
+      labels:
+        app: simpletimeservice
+    spec:
+      containers:
+        - name: simpletimeservice
+          image: maverick96k/simpletimeservice:latest
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: simpletimeservice-lb
+  namespace: simpletimeservice
+  labels:
+    app: simpletimeservice
+  annotations:
+    # Request an NLB (recommended for simplicity). Remove if you want the cloud default.
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    # Target pod IPs directly (avoids node port), works with NLB target type = ip
+    service.beta.kubernetes.io/aws-load-balancer-target-type: "ip"
+    # If you want an internal LB use "true" (here it's internet-facing by default)
+    # service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+spec:
+  type: LoadBalancer
+  selector:
+    app: simpletimeservice
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
