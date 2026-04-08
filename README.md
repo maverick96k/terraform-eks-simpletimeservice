@@ -115,4 +115,8 @@ aws configure
 
 From the `terraform/` directory:
 
-```b
+```bash
+terraform init
+terraform plan
+terraform apply -auto-approve
+```
